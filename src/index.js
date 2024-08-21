@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import ReactDOM from "react-dom/client";
 import "./index.css";
 import App from "./App";
-import StarRating from "./starRating";
+import StarRating from "./components/StarRating";
 // import reportWebVitals from './reportWebVitals';
 
 function Test() {
