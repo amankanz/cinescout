@@ -59,7 +59,7 @@ export default function App() {
   const [watched, setWatched] = useState([]);
   const [isloading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
-  const [selectedId, setSelectedId] = useState("tt26693681");
+  const [selectedId, setSelectedId] = useState("");
 
   /*
   useEffect(function () {
@@ -283,6 +283,7 @@ function Movie({ movie, onSelectMovie }) {
 
 function MovieDetails({ selectedId, onCloseMovie }) {
   const [movie, setMovie] = useState({});
+  const [isLoading, setIsLoading] = useState(false);
 
   const {
     Title: title,
@@ -297,7 +298,7 @@ function MovieDetails({ selectedId, onCloseMovie }) {
     Genre: genre,
     Director: director,
     Language: language,
-    Rate: rate,
+    Rated: rated,
     Type: type,
     totalSeasons,
     Writer: writer,
@@ -305,49 +306,80 @@ function MovieDetails({ selectedId, onCloseMovie }) {
 
   console.log(title, year, runtime);
 
-  useEffect(function () {
-    async function getMovieDetails() {
-      const response = await fetch(
-        `http://www.omdbapi.com/?apikey=${KEY}&i=${selectedId}`
-      );
+  useEffect(
+    function () {
+      async function getMovieDetails() {
+        setIsLoading(true);
+        const response = await fetch(
+          `http://www.omdbapi.com/?apikey=${KEY}&i=${selectedId}`
+        );
 
-      const data = await response.json();
-      console.log(data);
-      setMovie(data);
-    }
+        const data = await response.json();
+        console.log(data);
+        setMovie(data);
+        setIsLoading(false);
+      }
 
-    getMovieDetails();
-  }, []);
+      getMovieDetails();
+    },
+    [selectedId]
+  );
 
   return (
     <div className="details">
-      <header>
-        <button className="btn-back" onClick={onCloseMovie}>
-          &larr;
-        </button>
-        <img src={poster} alt={`Poster of ${title} movie`} />
-        <div className="details-overview">
-          <h2>{title}</h2>
-          <p>
-            {released} &bull; {runtime}
-          </p>
-          <p>{genre}</p>
-          <p>
-            <span>⭐</span>
-            {imdbRating} IMDb Rating
-          </p>
-        </div>
-      </header>
+      {isLoading ? (
+        <Loader />
+      ) : (
+        <>
+          <header>
+            <button className="btn-back" onClick={onCloseMovie}>
+              &larr;
+            </button>
+            <img src={poster} alt={`Poster of ${title} movie`} />
+            <div className="details-overview">
+              <h2>{title}</h2>
+              <p>
+                {released} &bull; {runtime}
+              </p>
 
-      <section>
-        <StarRating />
+              <p>
+                <span>⭐</span>
+                {imdbRating} IMDb Rating
+              </p>
+            </div>
+          </header>
+          <section>
+            <div className="rating">
+              <StarRating maxRating={10} size={24} />
+            </div>
 
-        <p>
-          <em>{plot}</em>
-        </p>
-        <p>Starring {actors}</p>
-        <p>Directed by {director}</p>
-      </section>
+            <p>
+              <em>{plot}</em>
+            </p>
+            <p>Starring: {actors}</p>
+            <p>Directed by {director}</p>
+            <p>Country: {country}</p>
+            <p>Language: {language}</p>
+            <p>Type: {type}</p>
+            <p
+              style={
+                type === "movie" ? { display: "none" } : { display: "block" }
+              }
+            >
+              Seasons: {totalSeasons} Seasons
+            </p>
+            <p>Writer: {writer}</p>
+            <p>Genre: {genre}</p>
+            <p
+              style={
+                type === "movie" ? { display: "none" } : { display: "block" }
+              }
+            >
+              Rated: {rated}
+            </p>
+          </section>
+        </>
+      )}
     </div>
   );
 }
