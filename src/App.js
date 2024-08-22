@@ -173,7 +173,7 @@ export default function App() {
 function ErrorMessage({ message }) {
   return (
     <p className="error">
-      <span>⛔</span> {message}
+      <span>😵</span> {message}
     </p>
   );
 }
@@ -284,6 +284,7 @@ function Movie({ movie, onSelectMovie }) {
 function MovieDetails({ selectedId, onCloseMovie }) {
   const [movie, setMovie] = useState({});
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const {
     Title: title,
@@ -304,20 +305,31 @@ function MovieDetails({ selectedId, onCloseMovie }) {
     Writer: writer,
   } = movie;
 
-  console.log(title, year, runtime);
+  // console.log(title, year, runtime);
 
   useEffect(
     function () {
       async function getMovieDetails() {
-        setIsLoading(true);
-        const response = await fetch(
-          `http://www.omdbapi.com/?apikey=${KEY}&i=${selectedId}`
-        );
+        try {
+          setIsLoading(true);
+          setError("");
+          const response = await fetch(
+            `http://www.omdbapi.com/?apikey=${KEY}&i=${selectedId}`
+          );
 
-        const data = await response.json();
-        console.log(data);
-        setMovie(data);
-        setIsLoading(false);
+          if (!response.ok) throw new Error("Something went wrong");
+
+          const data = await response.json();
+
+          console.log("Data:", data);
+          setMovie(data);
+          setIsLoading(false);
+        } catch (error) {
+          console.log("Error:", error.message);
+          setError(error.message);
+        } finally {
+          setIsLoading(false);
+        }
       }
 
       getMovieDetails();
@@ -327,9 +339,8 @@ function MovieDetails({ selectedId, onCloseMovie }) {
 
   return (
     <div className="details">
-      {isLoading ? (
-        <Loader />
-      ) : (
+      {isLoading && <Loader />}
+      {!isLoading && !error && (
         <>
           <header>
             <button className="btn-back" onClick={onCloseMovie}>
@@ -370,6 +381,7 @@ function MovieDetails({ selectedId, onCloseMovie }) {
             </p>
             <p>Writer: {writer}</p>
             <p>Genre: {genre}</p>
+            <p>Year: {year}</p>
             <p
               style={
                 type === "movie" ? { display: "none" } : { display: "block" }
@@ -380,6 +392,7 @@ function MovieDetails({ selectedId, onCloseMovie }) {
           </section>
         </>
       )}
+      {error && <ErrorMessage message={error} />}
     </div>
   );
 }
