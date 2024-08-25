@@ -326,6 +326,8 @@ function MovieDetails({ selectedId, onCloseMovie, onAddWatched, watched }) {
     Writer: writer,
   } = movie;
 
+  console.log(title);
+
   function handleAddToList() {
     const newWatchedMovie = {
       imdbID: selectedId,
@@ -343,12 +345,17 @@ function MovieDetails({ selectedId, onCloseMovie, onAddWatched, watched }) {
 
   useEffect(
     function () {
+      const controller = new AbortController();
+
       async function getMovieDetails() {
         try {
           setIsLoading(true);
           setError("");
           const response = await fetch(
-            `http://www.omdbapi.com/?apikey=${KEY}&i=${selectedId}`
+            `http://www.omdbapi.com/?apikey=${KEY}&i=${selectedId}`,
+            {
+              signal: controller.signal,
+            }
           );
 
           if (!response.ok) throw new Error("Something went wrong");
@@ -358,17 +365,39 @@ function MovieDetails({ selectedId, onCloseMovie, onAddWatched, watched }) {
           console.log("Data:", data);
           setMovie(data);
           setIsLoading(false);
+          setError("");
         } catch (error) {
           console.log("Error:", error.message);
-          setError(error.message);
+
+          if (error.name !== "AbortError") {
+            setError(error.message);
+          }
         } finally {
           setIsLoading(false);
         }
       }
 
       getMovieDetails();
+
+      return function () {
+        controller.abort();
+      };
     },
     [selectedId]
+  );
+
+  useEffect(
+    function () {
+      if (!title) return;
+      document.title = `Movie | ${title}`;
+
+      return function () {
+        document.title = "CineScout | ExploreMovies";
+
+        console.log(`Cleanup effect for movie ${title}`);
+      };
+    },
+    [title]
   );
 
   return (
@@ -476,7 +505,7 @@ function WatchedSummary({ watched }) {
         </p>
         <p>
           <span>⏳</span>
-          <span>{avgRuntime.toFixed(0)} min</span>
+          <span>{avgRuntime} min</span>
         </p>
       </div>
     </div>
