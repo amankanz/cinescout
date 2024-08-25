@@ -54,7 +54,7 @@ const average = (arr) =>
 const KEY = "c2245539";
 
 export default function App() {
-  const [query, setQuery] = useState("power");
+  const [query, setQuery] = useState("");
   const [movies, setMovies] = useState([]);
   const [watched, setWatched] = useState([]);
   const [isloading, setIsLoading] = useState(false);
@@ -99,12 +99,15 @@ export default function App() {
 
   useEffect(
     function () {
+      const controller = new AbortController();
+
       async function fetchedMovies() {
         try {
           setIsLoading(true);
           setError("");
           const response = await fetch(
-            `http://www.omdbapi.com/?apikey=${KEY}&s=${query}`
+            `http://www.omdbapi.com/?apikey=${KEY}&s=${query}`,
+            { signal: controller.signal }
           );
 
           if (!response.ok) throw new Error("Something went wrong...");
@@ -116,9 +119,13 @@ export default function App() {
           setMovies(data.Search);
           console.log(data.Search);
           setIsLoading(false);
+          setError("");
         } catch (error) {
           console.log(error.message);
-          setError(error.message);
+
+          if (error.name !== "AbortError") {
+            setError(error.message);
+          }
         } finally {
           setIsLoading(false);
         }
@@ -130,7 +137,12 @@ export default function App() {
         return;
       }
 
+      handleCloseMovie();
       fetchedMovies();
+
+      return function () {
+        controller.abort();
+      };
     },
     [query]
   );
@@ -342,6 +354,24 @@ function MovieDetails({ selectedId, onCloseMovie, onAddWatched, watched }) {
     onAddWatched(newWatchedMovie);
     onCloseMovie();
   }
+
+  useEffect(
+    function () {
+      function callback(e) {
+        if (e.code === "Escape") {
+          onCloseMovie();
+          console.log("CLOSING");
+        }
+      }
+
+      document.addEventListener("keydown", callback);
+
+      return function () {
+        document.removeEventListener("keydown", callback);
+      };
+    },
+    [onCloseMovie]
+  );
 
   useEffect(
     function () {
