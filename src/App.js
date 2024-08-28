@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import StarRating from "./components/StarRating";
 import { useMovies } from "./useMovies";
 import { useLocalStorageState } from "./useLocalStorageState";
+import { useKey } from "./useKey";
 
 const average = (arr) =>
   arr.reduce((acc, cur, i, arr) => acc + cur / arr.length, 0);
@@ -128,6 +129,37 @@ function Logo() {
 }
 
 function Explore({ query, onSetQuery }) {
+  const inputEl = useRef(null);
+
+  useKey("Enter", function () {
+    if (document.activeElement === inputEl.current) {
+      console.log(inputEl.current);
+      return;
+    }
+    inputEl.current.focus();
+    onSetQuery("");
+  });
+
+  // useEffect(
+  //   function () {
+  //     function callback(e) {
+  //       if (e.code === "Enter") {
+  //         if (document.activeElement === inputEl.current) {
+  //           console.log(inputEl.current);
+  //           return;
+  //         }
+  //         inputEl.current.focus();
+  //         onSetQuery("");
+  //       }
+  //     }
+
+  //     document.addEventListener("keydown", callback);
+
+  //     return () => document.addEventListener("keydown", callback);
+  //   },
+  //   [onSetQuery]
+  // );
+
   return (
     <input
       className="search"
@@ -135,6 +167,7 @@ function Explore({ query, onSetQuery }) {
       placeholder="Explore movies..."
       value={query}
       onChange={(e) => onSetQuery(e.target.value)}
+      ref={inputEl}
     />
   );
 }
@@ -257,23 +290,7 @@ function MovieDetails({ selectedId, onCloseMovie, onAddWatched, watched }) {
   const isTop = imdbRating > 8;
   console.log(isTop);
 
-  useEffect(
-    function () {
-      function callback(e) {
-        if (e.code === "Escape") {
-          onCloseMovie();
-          console.log("CLOSING");
-        }
-      }
-
-      document.addEventListener("keydown", callback);
-
-      return function () {
-        document.removeEventListener("keydown", callback);
-      };
-    },
-    [onCloseMovie]
-  );
+  useKey("Escape", onCloseMovie);
 
   useEffect(
     function () {
